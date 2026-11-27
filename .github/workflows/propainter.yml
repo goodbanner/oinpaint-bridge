@@ -1,0 +1,59 @@
+name: ProPainter sample test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  propainter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Clone ProPainter & install deps
+        run: |
+          set -e
+          git clone --depth 1 https://github.com/sczhou/ProPainter.git ProPainter
+          cd ProPainter
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install tensorboard
+          python -c "import cv2, torch, torchvision; print('cv2',cv2.__version__,'torch',torch.__version__)"
+
+      - name: Pre-download ProPainter weights
+        run: |
+          set -e
+          mkdir -p ProPainter/weights
+          cd ProPainter/weights
+          wget -q --show-progress https://github.com/sczhou/ProPainter/releases/download/v0.1.0/ProPainter.pth
+          wget -q --show-progress https://github.com/sczhou/ProPainter/releases/download/v0.1.0/recurrent_flow_completion.pth
+          wget -q --show-progress https://github.com/sczhou/ProPainter/releases/download/v0.1.0/raft-things.pth
+          ls -lh
+
+      - name: Run ProPainter on 3 sequences
+        run: |
+          set -e
+          for s in seq1 seq2 seq3; do
+            echo "=== $s ==="
+            mkdir -p "$GITHUB_WORKSPACE/propainter_out/$s"
+            cd "$GITHUB_WORKSPACE/ProPainter"
+            python inference_propainter.py \
+              -i "$GITHUB_WORKSPACE/propainter_test/$s" \
+              -m "$GITHUB_WORKSPACE/propainter_test/${s}_mask" \
+              -o "$GITHUB_WORKSPACE/propainter_out/$s" \
+              --save_frames --save_fps 5 || echo "$s failed"
+          done
+          ls -la "$GITHUB_WORKSPACE/propainter_out/seq1/" 2>&1 | head -10
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: propainter-results
+          path: propainter_out/
+          if-no-files-found: warn

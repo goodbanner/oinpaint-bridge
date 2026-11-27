@@ -1,0 +1,29 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.example.oinpaintbridge'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.example.oinpaintbridge'
+        minSdk 30
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release { minifyEnabled false }
+        debug { minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly files('libs/xposed-stub.jar')
+    implementation files('../libs/kotlin-stdlib.jar')
+}
+

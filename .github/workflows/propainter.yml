@@ -59,6 +59,19 @@ jobs:
           done
           ls -la "$GITHUB_WORKSPACE/propainter_out/seq1/" 2>&1 | head -10
 
+      - name: Show output files & base64 sample
+        run: |
+          for s in seq1 seq2 seq3; do
+            echo "===  files ==="
+            find "$GITHUB_WORKSPACE/propainter_out/$s" -type f -name '*.jpg' -o -name '*.png' | sort
+            echo "===  base64 sample (first frame) ==="
+            f=$(find "$GITHUB_WORKSPACE/propainter_out/$s" -type f -name '*.jpg' -o -name '*.png' | sort | head -1)
+            if [ -n "$f" ]; then
+              base64 "$f" | head -c 200
+              echo
+            fi
+          done
+
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4

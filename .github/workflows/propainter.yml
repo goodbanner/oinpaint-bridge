@@ -6,9 +6,18 @@ on:
 jobs:
   propainter:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+
+      - name: Add swap to avoid OOM
+        run: |
+          sudo swapoff -a || true
+          sudo fallocate -l 8G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -46,7 +55,7 @@ jobs:
               -i "$GITHUB_WORKSPACE/propainter_test/$s" \
               -m "$GITHUB_WORKSPACE/propainter_test/${s}_mask" \
               -o "$GITHUB_WORKSPACE/propainter_out/$s" \
-              --save_frames --save_fps 5 || echo "$s failed"
+              --resize_ratio 0.5 --save_frames --save_fps 5 || echo "$s failed"
           done
           ls -la "$GITHUB_WORKSPACE/propainter_out/seq1/" 2>&1 | head -10
 
